@@ -100,7 +100,7 @@ var isDevelopment = app.Environment.IsDevelopment();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-    KnownNetworks    = { new IPNetwork(IPAddress.Parse("172.16.0.0"), 12) },
+    KnownIPNetworks  = { new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12) },
 });
 
 if (!isDevelopment)
