@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: kuyrukhane
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_HTTP_PORTS
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kuyrukhane-db
+          property: connectionString
+      - key: JWT_KEY
+        generateValue: true
+      # Set these in the Render dashboard after first deploy
+      - key: APP_BASE_URL
+        sync: false   # e.g. https://kuyrukhane.onrender.com
+      - key: APP_HOST
+        sync: false   # e.g. kuyrukhane.onrender.com
+      - key: Email__From
+        sync: false
+      - key: Email__FromName
+        value: Family Library
+      - key: Email__Smtp__Host
+        sync: false
+      - key: Email__Smtp__Port
+        value: "587"
+      - key: Email__Smtp__Username
+        sync: false
+      - key: Email__Smtp__Password
+        sync: false
+
+databases:
+  - name: kuyrukhane-db
+    plan: starter      # Render no longer offers a free PostgreSQL tier
+    databaseName: library
+    user: library

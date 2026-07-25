@@ -1,0 +1,96 @@
+@library_HostAddress = http://localhost:5254
+
+### Health
+GET {{library_HostAddress}}/health
+
+###
+
+### Register
+POST {{library_HostAddress}}/register
+Content-Type: application/json
+
+{
+  "name": "alice",
+  "email": "alice@example.com",
+  "password": "password123"
+}
+
+###
+
+### Login — auth is set as an httpOnly cookie; subsequent requests below are authenticated via that cookie
+POST {{library_HostAddress}}/login
+Content-Type: application/json
+
+{
+  "name": "alice",
+  "password": "password123",
+  "rememberMe": false
+}
+
+###
+
+### Logout
+POST {{library_HostAddress}}/logout
+
+###
+
+### Current user
+GET {{library_HostAddress}}/me
+
+###
+
+### List books
+GET {{library_HostAddress}}/books?page=1&pageSize=20
+
+###
+
+### Search books
+GET {{library_HostAddress}}/books?search=tolkien
+
+###
+
+### Get book by id
+GET {{library_HostAddress}}/books/1
+
+###
+
+### Add book manually
+POST {{library_HostAddress}}/books
+Content-Type: application/json
+
+{
+  "baslik": "The Hobbit",
+  "yazar": "J.R.R. Tolkien",
+  "isbn": "9780261102217",
+  "isAvailable": true
+}
+
+###
+
+### Import book from Open Library by ISBN
+POST {{library_HostAddress}}/books/import/9780261102217
+
+###
+
+### Update book
+PUT {{library_HostAddress}}/books/1
+Content-Type: application/json
+
+{
+  "baslik": "The Hobbit",
+  "yazar": "J.R.R. Tolkien",
+  "isbn": "9780261102217",
+  "isAvailable": false
+}
+
+###
+
+### Delete book
+DELETE {{library_HostAddress}}/books/1
+
+###
+
+### List users (admin only)
+GET {{library_HostAddress}}/users
+
+###

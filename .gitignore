@@ -1,0 +1,44 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# ASP.NET Core
+*.db
+*.db-shm
+*.db-wal
+
+# Published output
+publish/
+out/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+
+# Secrets — never commit these
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+.env.*
+secrets.json
+
+# Built frontend — run `npm run build` after cloning
+wwwroot/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
