@@ -165,6 +165,7 @@ export default function Login({ onLogin, lang, toggleLang, theme, toggleTheme })
     INVALID_CREDENTIALS: () => t(lang, 'invalidCredentials'),
     EMAIL_NOT_VERIFIED:  () => t(lang, 'emailNotVerified'),
     ACCOUNT_LOCKED:      () => t(lang, 'accountLocked') ?? 'Too many failed attempts. Try again in 15 minutes.',
+    REGISTER_FAILED:     () => t(lang, 'registerFailed'),
   }
 
   function switchMode() {

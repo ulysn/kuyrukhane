@@ -181,9 +181,11 @@ app.MapPost("/register", async (RegisterRequest req, LibraryDb db, EmailService 
     }
     catch
     {
-        db.Users.Remove(user);
-        await db.SaveChangesAsync();
-        return Results.Problem("Failed to send verification email. Check your email configuration and try again.", statusCode: 502);
+        return Results.Created($"/users/{user.Id}", new
+        {
+            message         = "Account created, but we could not send the verification email. Use \"Resend verification email\" to try again.",
+            emailSendFailed = true,
+        });
     }
 
     return Results.Created($"/users/{user.Id}", new { message = "Registration successful. Please check your email to verify your account." });
