@@ -1043,11 +1043,12 @@ public class EmailService(IConfiguration config)
     static async Task Send(MimeMessage message, IConfiguration config)
     {
         var port = int.TryParse(config["Email:Smtp:Port"], out var p) ? p : 587;
-        using var smtp = new SmtpClient();
-        await smtp.ConnectAsync(config["Email:Smtp:Host"]!, port, SecureSocketOptions.StartTls);
-        await smtp.AuthenticateAsync(config["Email:Smtp:Username"]!, config["Email:Smtp:Password"]!);
-        await smtp.SendAsync(message);
-        await smtp.DisconnectAsync(true);
+        using var cts  = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var smtp = new SmtpClient { Timeout = 10_000 };
+        await smtp.ConnectAsync(config["Email:Smtp:Host"]!, port, SecureSocketOptions.StartTls, cts.Token);
+        await smtp.AuthenticateAsync(config["Email:Smtp:Username"]!, config["Email:Smtp:Password"]!, cts.Token);
+        await smtp.SendAsync(message, cancellationToken: cts.Token);
+        await smtp.DisconnectAsync(true, cts.Token);
     }
 }
 
