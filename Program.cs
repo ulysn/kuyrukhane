@@ -145,7 +145,7 @@ app.MapHealthChecks("/health");
 // AUTH
 // ═══════════════════════════════════════════════════════════════════════════════
 
-app.MapPost("/register", async (RegisterRequest req, LibraryDb db, EmailService emailSvc, IConfiguration config) =>
+app.MapPost("/register", async (RegisterRequest req, LibraryDb db, EmailService emailSvc, IConfiguration config, ILogger<Program> logger) =>
 {
     if (string.IsNullOrWhiteSpace(req.Name)     || req.Name.Length    > 100) return Results.BadRequest("Username is required and must be ≤ 100 characters.");
     if (string.IsNullOrWhiteSpace(req.Email)    || !IsValidEmail(req.Email) || req.Email.Length > 200) return Results.BadRequest("A valid email address is required.");
@@ -179,8 +179,14 @@ app.MapPost("/register", async (RegisterRequest req, LibraryDb db, EmailService 
     {
         await emailSvc.SendVerificationEmailAsync(normalizedEmail, verificationUrl, req.Name.Trim());
     }
-    catch
+    catch (Exception ex)
     {
+        logger.LogError(ex,
+            "Verification email failed for {Email} — host={Host} port={Port} user={SmtpUser}",
+            normalizedEmail,
+            config["Email:Smtp:Host"],
+            config["Email:Smtp:Port"],
+            config["Email:Smtp:Username"]);
         return Results.Created($"/users/{user.Id}", new
         {
             message         = "Account created, but we could not send the verification email. Use \"Resend verification email\" to try again.",
@@ -969,7 +975,7 @@ public class LibraryDb(DbContextOptions<LibraryDb> options) : DbContext(options)
 //   Email:Smtp:Username — SMTP login
 //   Email:Smtp:Password — SMTP password or app password
 //   App:BaseUrl         — public URL for verification links, e.g. https://xxxx.ngrok-free.app
-public class EmailService(IConfiguration config)
+public class EmailService(IConfiguration config, ILogger<EmailService> logger)
 {
     public async Task SendVerificationEmailAsync(string toEmail, string verificationUrl, string userName)
     {
@@ -991,7 +997,7 @@ public class EmailService(IConfiguration config)
         };
         message.Body = body.ToMessageBody();
 
-        await Send(message, config);
+        await Send(message);
     }
 
     public async Task SendPasswordResetEmailAsync(string toEmail, string resetUrl, string userName)
@@ -1014,7 +1020,7 @@ public class EmailService(IConfiguration config)
         };
         message.Body = body.ToMessageBody();
 
-        await Send(message, config);
+        await Send(message);
     }
 
     public async Task SendPasswordChangedEmailAsync(string toEmail, string userName)
@@ -1037,18 +1043,25 @@ public class EmailService(IConfiguration config)
         };
         message.Body = body.ToMessageBody();
 
-        await Send(message, config);
+        await Send(message);
     }
 
-    static async Task Send(MimeMessage message, IConfiguration config)
+    async Task Send(MimeMessage message)
     {
+        var host = config["Email:Smtp:Host"]!;
         var port = int.TryParse(config["Email:Smtp:Port"], out var p) ? p : 587;
+        var user = config["Email:Smtp:Username"]!;
+
+        logger.LogInformation("SMTP → connecting to {Host}:{Port}", host, port);
         using var cts  = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         using var smtp = new SmtpClient { Timeout = 10_000 };
-        await smtp.ConnectAsync(config["Email:Smtp:Host"]!, port, SecureSocketOptions.StartTls, cts.Token);
-        await smtp.AuthenticateAsync(config["Email:Smtp:Username"]!, config["Email:Smtp:Password"]!, cts.Token);
+        await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls, cts.Token);
+        logger.LogInformation("SMTP → authenticating as {User}", user);
+        await smtp.AuthenticateAsync(user, config["Email:Smtp:Password"]!, cts.Token);
+        logger.LogInformation("SMTP → sending to {To}", message.To);
         await smtp.SendAsync(message, cancellationToken: cts.Token);
         await smtp.DisconnectAsync(true, cts.Token);
+        logger.LogInformation("SMTP → message delivered");
     }
 }
 

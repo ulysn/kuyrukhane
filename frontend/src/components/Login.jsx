@@ -166,6 +166,7 @@ export default function Login({ onLogin, lang, toggleLang, theme, toggleTheme })
     EMAIL_NOT_VERIFIED:  () => t(lang, 'emailNotVerified'),
     ACCOUNT_LOCKED:      () => t(lang, 'accountLocked') ?? 'Too many failed attempts. Try again in 15 minutes.',
     REGISTER_FAILED:     () => t(lang, 'registerFailed'),
+    EMAIL_SEND_FAILED:   () => t(lang, 'emailSendFailed') ?? 'Account created, but the verification email could not be sent. Use "Resend verification email" below.',
   }
 
   function switchMode() {
@@ -188,8 +189,9 @@ export default function Login({ onLogin, lang, toggleLang, theme, toggleTheme })
     setShowInlineResend(false)
     try {
       if (mode === 'register') {
-        await register({ name: form.name, email: form.email, password: form.password })
-        setRegisteredEmail(form.email)
+        const data = await register({ name: form.name, email: form.email, password: form.password })
+        setRegisteredEmail(data?.emailSendFailed ? null : form.email)
+        if (data?.emailSendFailed) throw new Error('EMAIL_SEND_FAILED')
       } else {
         const data = await login({ name: form.name, password: form.password, rememberMe: form.rememberMe })
         onLogin({ userId: data.userId, name: data.name })
@@ -197,7 +199,7 @@ export default function Login({ onLogin, lang, toggleLang, theme, toggleTheme })
     } catch (err) {
       const msg = errorMessages[err.message]?.() ?? err.message
       setError(msg)
-      if (err.message === 'EMAIL_NOT_VERIFIED') setShowInlineResend(true)
+      if (err.message === 'EMAIL_NOT_VERIFIED' || err.message === 'EMAIL_SEND_FAILED') setShowInlineResend(true)
     } finally {
       setLoading(false)
     }
